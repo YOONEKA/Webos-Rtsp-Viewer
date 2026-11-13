@@ -12,26 +12,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract ZIP
-        run: for f in *.zip; do unzip -o "$f"; done
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install webOS CLI (ares-package)
-        run: npm install -g @webosose/ares-cli
+      - name: Install LG webOS CLI (@webos-tools/cli)
+        run: npm install -g @webos-tools/cli
 
-      - name: Stage Web App & Package .ipk
-        working-directory: RtspDreamWebOS
+      - name: Stage & Package webOS TV .ipk
         run: |
+          if ls *.zip 1> /dev/null 2>&1; then
+            for f in *.zip; do unzip -o "$f"; done
+          fi
+          if [ -d RtspDreamWebOS ]; then
+            cd RtspDreamWebOS
+          fi
           mkdir -p build/webapp dist
           cp appinfo.json index.html styles.css app.js icon.png largeIcon.png build/webapp/
-          ares-package build/webapp service -o dist
+          ares-package build/webapp service --no-minify -o dist
+          ls -lh dist
 
       - name: Upload webOS .ipk Artifact
         uses: actions/upload-artifact@v4
         with:
           name: RtspDreamViewer-webos-ipk
-          path: RtspDreamWebOS/dist/*.ipk
+          path: "**/dist/*.ipk"
